@@ -7,26 +7,45 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
+    html {
+      touch-action: manipulation;
+      -ms-touch-action: manipulation;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: #1a1a2e;
       color: #e0e0e0;
-      min-height: 100vh;
+      height: 100vh;
+      height: 100dvh;
       display: flex;
       flex-direction: column;
       align-items: center;
+      overflow: hidden;
+    }
+
+    input, textarea {
+      -webkit-user-select: text;
+      -moz-user-select: text;
+      -ms-user-select: text;
+      user-select: text;
     }
 
     h1 {
-      margin: 24px 0 16px;
-      font-size: 1.6rem;
+      margin: 8px 0;
+      font-size: 1.3rem;
       color: #fff;
+      flex-shrink: 0;
     }
 
     #drop-zone {
-      width: 80%;
+      width: 90%;
       max-width: 900px;
-      min-height: 200px;
+      flex: 1;
       border: 2px dashed #555;
       border-radius: 12px;
       display: flex;
@@ -56,56 +75,37 @@
 
     #video-container {
       display: none;
-      width: 80%;
+      width: 90%;
       max-width: 900px;
+      flex: 1;
       flex-direction: column;
       align-items: center;
+      min-height: 0;
     }
 
     #video-container.visible { display: flex; }
 
     video {
       width: 100%;
-      max-height: 70vh;
+      flex: 1;
+      min-height: 0;
+      object-fit: contain;
       border-radius: 8px;
       background: #000;
     }
 
-    .controls {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin: 16px 0;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-
-    button {
-      background: #2d2d5e;
-      color: #e0e0e0;
-      border: 1px solid #444;
-      padding: 10px 18px;
-      border-radius: 8px;
-      font-size: 0.95rem;
-      cursor: pointer;
-      transition: background 0.15s;
-      user-select: none;
-    }
-
-    button:hover { background: #3b3b7a; }
-    button:active { background: #4f4fa0; }
-
     .frame-info {
       display: flex;
       align-items: center;
-      gap: 16px;
-      font-size: 1.05rem;
+      gap: 12px;
+      font-size: 0.9rem;
       background: #16213e;
-      padding: 10px 20px;
+      padding: 6px 14px;
       border-radius: 8px;
-      margin-bottom: 12px;
+      margin: 6px 0;
       flex-wrap: wrap;
       justify-content: center;
+      flex-shrink: 0;
     }
 
     .frame-info span { white-space: nowrap; }
@@ -116,7 +116,7 @@
       gap: 6px;
     }
 
-    .fps-group label { font-size: 0.9rem; color: #aaa; }
+    .fps-group label { font-size: 0.85rem; color: #aaa; }
 
     .fps-group input {
       width: 80px;
@@ -125,38 +125,76 @@
       border: 1px solid #444;
       border-radius: 6px;
       padding: 4px 8px;
-      font-size: 0.95rem;
+      font-size: 0.85rem;
       text-align: center;
     }
 
-    #load-new {
-      margin-bottom: 24px;
-      font-size: 0.85rem;
-      background: transparent;
-      border-color: #555;
-      color: #888;
+    /* Nav buttons: 4 directional in a row, play below */
+    .nav-controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      gap: 6px;
+      width: 100%;
+      flex-shrink: 0;
+      margin-bottom: 4px;
     }
 
+    .play-row {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 6px;
+      width: 100%;
+      flex-shrink: 0;
+      margin-bottom: 4px;
+    }
+
+    .marker-controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 6px;
+      width: 100%;
+      flex-shrink: 0;
+      margin-bottom: 4px;
+    }
+
+    button {
+      background: #2d2d5e;
+      color: #e0e0e0;
+      border: 1px solid #444;
+      padding: 8px 4px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: background 0.15s;
+      user-select: none;
+      white-space: nowrap;
+      text-align: center;
+    }
+
+    button:hover { background: #3b3b7a; }
+    button:active { background: #4f4fa0; }
+
     .kbd {
-      font-size: 0.75rem;
+      font-size: 0.65rem;
       color: #777;
       background: #262640;
-      padding: 2px 6px;
+      padding: 1px 4px;
       border-radius: 4px;
-      margin-left: 4px;
+      margin-left: 2px;
     }
 
     .range-info {
       display: flex;
       align-items: center;
-      gap: 12px;
-      font-size: 0.95rem;
+      gap: 10px;
+      font-size: 0.85rem;
       background: #16213e;
-      padding: 10px 20px;
+      padding: 6px 14px;
       border-radius: 8px;
-      margin-bottom: 12px;
+      margin-bottom: 4px;
       flex-wrap: wrap;
       justify-content: center;
+      flex-shrink: 0;
     }
 
     .range-info span { white-space: nowrap; }
@@ -165,19 +203,24 @@
 
     .marker-btn {
       background: #2d5e2d;
-      font-size: 0.85rem;
-      padding: 8px 14px;
     }
 
     .marker-btn:hover { background: #3a7a3a; }
 
     #clear-markers {
       background: #5e2d2d;
-      font-size: 0.85rem;
-      padding: 8px 14px;
     }
 
     #clear-markers:hover { background: #7a3a3a; }
+
+    @media (min-width: 601px) {
+      button { padding: 10px 18px; font-size: 0.95rem; }
+      .kbd { font-size: 0.75rem; padding: 2px 6px; margin-left: 4px; }
+      .frame-info { font-size: 1.05rem; padding: 10px 20px; margin: 8px 0; }
+      .range-info { font-size: 0.95rem; padding: 10px 20px; margin-bottom: 8px; }
+      h1 { margin: 16px 0; font-size: 1.6rem; }
+      .nav-controls, .play-row, .marker-controls { gap: 10px; margin-bottom: 6px; }
+    }
   </style>
 </head>
 <body>
@@ -201,27 +244,28 @@
       </div>
     </div>
 
-    <div class="controls">
+    <div class="nav-controls">
       <button id="btn-back10" title="Back 10 frames">&laquo; 10 <span class="kbd">Shift+A</span></button>
       <button id="btn-prev" title="Previous frame">&larr; Prev <span class="kbd">A</span></button>
-      <button id="btn-play" title="Play / Pause">Play <span class="kbd">Space</span></button>
       <button id="btn-next" title="Next frame">Next &rarr; <span class="kbd">D</span></button>
       <button id="btn-fwd10" title="Forward 10 frames">10 &raquo; <span class="kbd">Shift+D</span></button>
     </div>
 
-    <div class="controls">
-      <button id="btn-set-start" class="marker-btn" title="Mark current frame as start">Set Start <span class="kbd">S</span></button>
-      <button id="btn-set-end" class="marker-btn" title="Mark current frame as end">Set End <span class="kbd">E</span></button>
+    <div class="play-row">
+      <button id="btn-play" title="Play / Pause">Play <span class="kbd">Space</span></button>
+    </div>
+
+    <div class="marker-controls">
+      <button id="btn-set-start" class="marker-btn" title="Mark current frame as start">Start <span class="kbd">S</span></button>
+      <button id="btn-set-end" class="marker-btn" title="Mark current frame as end">End <span class="kbd">E</span></button>
       <button id="clear-markers" title="Clear start and end markers">Clear</button>
     </div>
 
-    <div class="range-info" id="range-info" style="display: none;">
+    <div class="range-info" id="range-info">
       <span>Start: <strong id="start-frame">—</strong></span>
       <span>End: <strong id="end-frame">—</strong></span>
       <span>Delta: <strong id="delta-frames">—</strong> frames (<strong id="delta-time">—</strong>)</span>
     </div>
-
-    <button id="load-new">Load different video</button>
   </div>
 
   <script>
@@ -245,7 +289,6 @@
     const endFrame = document.getElementById('end-frame');
     const deltaFrames = document.getElementById('delta-frames');
     const deltaTime = document.getElementById('delta-time');
-    const loadNew = document.getElementById('load-new');
 
     let objectURL = null;
     let markedStart = null;
@@ -273,21 +316,16 @@
     }
 
     function updateRangeDisplay() {
-      if (markedStart !== null || markedEnd !== null) {
-        startFrame.textContent = markedStart !== null ? markedStart : '—';
-        endFrame.textContent = markedEnd !== null ? markedEnd : '—';
-        if (markedStart !== null && markedEnd !== null) {
-          const delta = Math.abs(markedEnd - markedStart);
-          const deltaSeconds = delta / getFPS();
-          deltaFrames.textContent = delta;
-          deltaTime.textContent = deltaSeconds.toFixed(3) + 's';
-        } else {
-          deltaFrames.textContent = '—';
-          deltaTime.textContent = '—';
-        }
-        rangeInfo.style.display = 'flex';
+      startFrame.textContent = markedStart !== null ? markedStart : '—';
+      endFrame.textContent = markedEnd !== null ? markedEnd : '—';
+      if (markedStart !== null && markedEnd !== null) {
+        const delta = Math.abs(markedEnd - markedStart);
+        const deltaSeconds = delta / getFPS();
+        deltaFrames.textContent = delta;
+        deltaTime.textContent = deltaSeconds.toFixed(3) + 's';
       } else {
-        rangeInfo.style.display = 'none';
+        deltaFrames.textContent = '—';
+        deltaTime.textContent = '—';
       }
     }
 
@@ -314,14 +352,12 @@
           mediaTimes.push(metadata.mediaTime);
           if (mediaTimes.length >= needed) {
             video.pause();
-            // Calculate average interval between actual video frames
             const intervals = [];
             for (let i = 1; i < mediaTimes.length; i++) {
               intervals.push(mediaTimes[i] - mediaTimes[i - 1]);
             }
             const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
             const rawFPS = 1 / avgInterval;
-            // Snap to nearest common FPS
             const commonFPS = [23.976, 24, 25, 29.97, 30, 50, 59.94, 60, 120];
             const closest = commonFPS.reduce((prev, curr) =>
               Math.abs(curr - rawFPS) < Math.abs(prev - rawFPS) ? curr : prev
@@ -425,18 +461,8 @@
       btnPlay.innerHTML = 'Pause <span class="kbd">Space</span>';
     });
 
-    loadNew.addEventListener('click', () => {
-      video.pause();
-      video.src = '';
-      if (objectURL) { URL.revokeObjectURL(objectURL); objectURL = null; }
-      videoContainer.classList.remove('visible');
-      dropZone.classList.remove('hidden');
-      fileInput.value = '';
-    });
-
     // Keyboard shortcuts
     document.addEventListener('keydown', e => {
-      // Don't capture when typing in the FPS input
       if (e.target === fpsInput) return;
       if (!videoContainer.classList.contains('visible')) return;
 
