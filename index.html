@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Frame Counter</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a2e;
+      color: #e0e0e0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h1 {
+      margin: 24px 0 16px;
+      font-size: 1.6rem;
+      color: #fff;
+    }
+
+    #drop-zone {
+      width: 80%;
+      max-width: 900px;
+      min-height: 200px;
+      border: 2px dashed #555;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      margin-bottom: 16px;
+      padding: 24px;
+    }
+
+    #drop-zone.drag-over {
+      border-color: #7c83ff;
+      background: rgba(124, 131, 255, 0.08);
+    }
+
+    #drop-zone p {
+      font-size: 1.1rem;
+      color: #aaa;
+      margin-bottom: 12px;
+    }
+
+    #drop-zone.hidden { display: none; }
+
+    #file-input { display: none; }
+
+    #video-container {
+      display: none;
+      width: 80%;
+      max-width: 900px;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    #video-container.visible { display: flex; }
+
+    video {
+      width: 100%;
+      max-height: 70vh;
+      border-radius: 8px;
+      background: #000;
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 16px 0;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    button {
+      background: #2d2d5e;
+      color: #e0e0e0;
+      border: 1px solid #444;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: background 0.15s;
+      user-select: none;
+    }
+
+    button:hover { background: #3b3b7a; }
+    button:active { background: #4f4fa0; }
+
+    .frame-info {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 1.05rem;
+      background: #16213e;
+      padding: 10px 20px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .frame-info span { white-space: nowrap; }
+
+    .fps-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .fps-group label { font-size: 0.9rem; color: #aaa; }
+
+    .fps-group input {
+      width: 80px;
+      background: #1a1a2e;
+      color: #fff;
+      border: 1px solid #444;
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 0.95rem;
+      text-align: center;
+    }
+
+    #load-new {
+      margin-bottom: 24px;
+      font-size: 0.85rem;
+      background: transparent;
+      border-color: #555;
+      color: #888;
+    }
+
+    .kbd {
+      font-size: 0.75rem;
+      color: #777;
+      background: #262640;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-left: 4px;
+    }
+
+    .range-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.95rem;
+      background: #16213e;
+      padding: 10px 20px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .range-info span { white-space: nowrap; }
+
+    .range-info strong { color: #7c83ff; }
+
+    .marker-btn {
+      background: #2d5e2d;
+      font-size: 0.85rem;
+      padding: 8px 14px;
+    }
+
+    .marker-btn:hover { background: #3a7a3a; }
+
+    #clear-markers {
+      background: #5e2d2d;
+      font-size: 0.85rem;
+      padding: 8px 14px;
+    }
+
+    #clear-markers:hover { background: #7a3a3a; }
+  </style>
+</head>
+<body>
+
+  <h1>Frame Counter</h1>
+
+  <div id="drop-zone">
+    <p>Drop a video file here or click to browse</p>
+    <input type="file" id="file-input" accept="video/*">
+  </div>
+
+  <div id="video-container">
+    <video id="video" preload="auto"></video>
+
+    <div class="frame-info">
+      <span>Frame: <strong id="frame-num">0</strong></span>
+      <span>Time: <strong id="time-display">0.000s</strong></span>
+      <div class="fps-group">
+        <label for="fps-input">FPS:</label>
+        <input type="text" id="fps-input" value="30" inputmode="decimal">
+      </div>
+    </div>
+
+    <div class="controls">
+      <button id="btn-back10" title="Back 10 frames">&laquo; 10 <span class="kbd">Shift+A</span></button>
+      <button id="btn-prev" title="Previous frame">&larr; Prev <span class="kbd">A</span></button>
+      <button id="btn-play" title="Play / Pause">Play <span class="kbd">Space</span></button>
+      <button id="btn-next" title="Next frame">Next &rarr; <span class="kbd">D</span></button>
+      <button id="btn-fwd10" title="Forward 10 frames">10 &raquo; <span class="kbd">Shift+D</span></button>
+    </div>
+
+    <div class="controls">
+      <button id="btn-set-start" class="marker-btn" title="Mark current frame as start">Set Start <span class="kbd">S</span></button>
+      <button id="btn-set-end" class="marker-btn" title="Mark current frame as end">Set End <span class="kbd">E</span></button>
+      <button id="clear-markers" title="Clear start and end markers">Clear</button>
+    </div>
+
+    <div class="range-info" id="range-info" style="display: none;">
+      <span>Start: <strong id="start-frame">—</strong></span>
+      <span>End: <strong id="end-frame">—</strong></span>
+      <span>Delta: <strong id="delta-frames">—</strong> frames (<strong id="delta-time">—</strong>)</span>
+    </div>
+
+    <button id="load-new">Load different video</button>
+  </div>
+
+  <script>
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+    const videoContainer = document.getElementById('video-container');
+    const video = document.getElementById('video');
+    const frameNum = document.getElementById('frame-num');
+    const timeDisplay = document.getElementById('time-display');
+    const fpsInput = document.getElementById('fps-input');
+    const btnPrev = document.getElementById('btn-prev');
+    const btnNext = document.getElementById('btn-next');
+    const btnBack10 = document.getElementById('btn-back10');
+    const btnFwd10 = document.getElementById('btn-fwd10');
+    const btnPlay = document.getElementById('btn-play');
+    const btnSetStart = document.getElementById('btn-set-start');
+    const btnSetEnd = document.getElementById('btn-set-end');
+    const clearMarkers = document.getElementById('clear-markers');
+    const rangeInfo = document.getElementById('range-info');
+    const startFrame = document.getElementById('start-frame');
+    const endFrame = document.getElementById('end-frame');
+    const deltaFrames = document.getElementById('delta-frames');
+    const deltaTime = document.getElementById('delta-time');
+    const loadNew = document.getElementById('load-new');
+
+    let objectURL = null;
+    let markedStart = null;
+    let markedEnd = null;
+    let videoFPS = 30;
+
+    function getFPS() {
+      const val = parseFloat(fpsInput.value);
+      return (val && val > 0) ? val : 30;
+    }
+
+    function getFrameDuration() {
+      return 1 / getFPS();
+    }
+
+    function getCurrentFrame() {
+      return Math.round(video.currentTime * getFPS());
+    }
+
+    function updateDisplay() {
+      const t = video.currentTime;
+      const frame = getCurrentFrame();
+      frameNum.textContent = frame;
+      timeDisplay.textContent = t.toFixed(3) + 's';
+    }
+
+    function updateRangeDisplay() {
+      if (markedStart !== null || markedEnd !== null) {
+        startFrame.textContent = markedStart !== null ? markedStart : '—';
+        endFrame.textContent = markedEnd !== null ? markedEnd : '—';
+        if (markedStart !== null && markedEnd !== null) {
+          const delta = Math.abs(markedEnd - markedStart);
+          const deltaSeconds = delta / getFPS();
+          deltaFrames.textContent = delta;
+          deltaTime.textContent = deltaSeconds.toFixed(3) + 's';
+        } else {
+          deltaFrames.textContent = '—';
+          deltaTime.textContent = '—';
+        }
+        rangeInfo.style.display = 'flex';
+      } else {
+        rangeInfo.style.display = 'none';
+      }
+    }
+
+    function seekFrames(count) {
+      video.pause();
+      const newTime = video.currentTime + count * getFrameDuration();
+      video.currentTime = Math.max(0, Math.min(newTime, video.duration || 0));
+    }
+
+    function detectVideoFPS() {
+      return new Promise((resolve) => {
+        if (!('requestVideoFrameCallback' in HTMLVideoElement.prototype)) {
+          resolve(30);
+          return;
+        }
+
+        const mediaTimes = [];
+        const needed = 10;
+
+        video.muted = true;
+        video.play();
+
+        const onFrame = (now, metadata) => {
+          mediaTimes.push(metadata.mediaTime);
+          if (mediaTimes.length >= needed) {
+            video.pause();
+            // Calculate average interval between actual video frames
+            const intervals = [];
+            for (let i = 1; i < mediaTimes.length; i++) {
+              intervals.push(mediaTimes[i] - mediaTimes[i - 1]);
+            }
+            const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+            const rawFPS = 1 / avgInterval;
+            // Snap to nearest common FPS
+            const commonFPS = [23.976, 24, 25, 29.97, 30, 50, 59.94, 60, 120];
+            const closest = commonFPS.reduce((prev, curr) =>
+              Math.abs(curr - rawFPS) < Math.abs(prev - rawFPS) ? curr : prev
+            );
+            resolve(closest);
+          } else {
+            video.requestVideoFrameCallback(onFrame);
+          }
+        };
+
+        video.requestVideoFrameCallback(onFrame);
+      });
+    }
+
+    function loadVideo(file) {
+      if (objectURL) URL.revokeObjectURL(objectURL);
+      objectURL = URL.createObjectURL(file);
+      video.src = objectURL;
+      video.load();
+      video.pause();
+      dropZone.classList.add('hidden');
+      videoContainer.classList.add('visible');
+
+      video.addEventListener('loadeddata', async () => {
+        try {
+          videoFPS = await detectVideoFPS();
+        } catch (e) {
+          videoFPS = 30;
+        }
+        fpsInput.value = videoFPS;
+        video.currentTime = 0;
+        updateDisplay();
+      }, { once: true });
+    }
+
+    // Drop zone events
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    dropZone.addEventListener('dragover', e => {
+      e.preventDefault();
+      dropZone.classList.add('drag-over');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('drag-over');
+    });
+
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault();
+      dropZone.classList.remove('drag-over');
+      const file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith('video/')) loadVideo(file);
+    });
+
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files[0]) loadVideo(fileInput.files[0]);
+    });
+
+    // Video time updates
+    video.addEventListener('timeupdate', updateDisplay);
+    video.addEventListener('seeked', updateDisplay);
+
+    // Button controls
+    btnNext.addEventListener('click', () => seekFrames(1));
+    btnPrev.addEventListener('click', () => seekFrames(-1));
+    btnFwd10.addEventListener('click', () => seekFrames(10));
+    btnBack10.addEventListener('click', () => seekFrames(-10));
+
+    btnPlay.addEventListener('click', () => {
+      if (video.paused) {
+        video.play();
+        btnPlay.innerHTML = 'Pause <span class="kbd">Space</span>';
+      } else {
+        video.pause();
+        btnPlay.innerHTML = 'Play <span class="kbd">Space</span>';
+      }
+    });
+
+    btnSetStart.addEventListener('click', () => {
+      markedStart = getCurrentFrame();
+      updateRangeDisplay();
+    });
+
+    btnSetEnd.addEventListener('click', () => {
+      markedEnd = getCurrentFrame();
+      updateRangeDisplay();
+    });
+
+    clearMarkers.addEventListener('click', () => {
+      markedStart = null;
+      markedEnd = null;
+      updateRangeDisplay();
+    });
+
+    video.addEventListener('pause', () => {
+      btnPlay.innerHTML = 'Play <span class="kbd">Space</span>';
+      updateDisplay();
+    });
+
+    video.addEventListener('play', () => {
+      btnPlay.innerHTML = 'Pause <span class="kbd">Space</span>';
+    });
+
+    loadNew.addEventListener('click', () => {
+      video.pause();
+      video.src = '';
+      if (objectURL) { URL.revokeObjectURL(objectURL); objectURL = null; }
+      videoContainer.classList.remove('visible');
+      dropZone.classList.remove('hidden');
+      fileInput.value = '';
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', e => {
+      // Don't capture when typing in the FPS input
+      if (e.target === fpsInput) return;
+      if (!videoContainer.classList.contains('visible')) return;
+
+      switch (e.code) {
+        case 'KeyD':
+          e.preventDefault();
+          e.shiftKey ? seekFrames(10) : seekFrames(1);
+          break;
+        case 'KeyA':
+          e.preventDefault();
+          e.shiftKey ? seekFrames(-10) : seekFrames(-1);
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          e.shiftKey ? seekFrames(10) : seekFrames(1);
+          break;
+        case 'ArrowLeft':
+          e.preventDefault();
+          e.shiftKey ? seekFrames(-10) : seekFrames(-1);
+          break;
+        case 'Space':
+          e.preventDefault();
+          btnPlay.click();
+          break;
+        case 'KeyS':
+          e.preventDefault();
+          btnSetStart.click();
+          break;
+        case 'KeyE':
+          e.preventDefault();
+          btnSetEnd.click();
+          break;
+      }
+    });
+  </script>
+</body>
+</html>
